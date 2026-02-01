@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion, BenchmarkId};
 use xcalgo::tda::tda_keygen;
-use xcalgo::tda::simd::{generate_random_bytes_simd, is_avx512_available};
+use xcalgo::tda::simd::{generate_random_bytes_simd, is_avx2_available};
 use xcalgo::tda::padding::{generate_padding_chunks, insert_padding};
 
 fn bench_keygen(c: &mut Criterion) {
@@ -51,8 +51,8 @@ fn bench_encrypt(c: &mut Criterion) {
 fn bench_simd_random_bytes(c: &mut Criterion) {
     let mut group = c.benchmark_group("SIMD Random Bytes");
 
-    // Show AVX512 availability
-    println!("AVX512 available: {}", is_avx512_available());
+    // Show AVX2 availability
+    println!("AVX2 available: {}", is_avx2_available());
 
     for size in [64, 256, 1024, 4096].iter() {
         group.bench_with_input(

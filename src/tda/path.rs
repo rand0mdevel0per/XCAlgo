@@ -1,4 +1,5 @@
 use crate::tda::graph::Graph;
+use crate::tda::simd::{bytes_to_bits_simd, bits_to_bytes_simd};
 
 /// Represents a path through the graph
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -165,28 +166,12 @@ pub fn decode_path_to_message(
 
 /// Convert bytes to a bit vector
 fn bytes_to_bits(bytes: &[u8]) -> Vec<bool> {
-    let mut bits = Vec::new();
-    for &byte in bytes {
-        for i in (0..8).rev() {
-            bits.push((byte >> i) & 1 == 1);
-        }
-    }
-    bits
+    bytes_to_bits_simd(bytes)
 }
 
 /// Convert a bit vector to bytes
 fn bits_to_bytes(bits: &[bool]) -> Vec<u8> {
-    let mut bytes = Vec::new();
-    for chunk in bits.chunks(8) {
-        let mut byte = 0u8;
-        for (i, &bit) in chunk.iter().enumerate() {
-            if bit {
-                byte |= 1 << (7 - i);
-            }
-        }
-        bytes.push(byte);
-    }
-    bytes
+    bits_to_bytes_simd(bits)
 }
 
 /// Convert a slice of bits to usize
