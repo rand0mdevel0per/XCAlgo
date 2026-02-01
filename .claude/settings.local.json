@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell \"\\(Get-Content src\\\\tda\\\\hints.rs\\).Count\")",
+      "Bash(powershell \"\\(Get-Content src\\\\lib.rs\\).Count\")"
+    ]
+  }
+}
