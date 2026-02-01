@@ -2,6 +2,15 @@
 name = "xcalgo"
 version = "0.1.0"
 edition = "2024"
+description = "XCA: Topological Data Analysis Cryptosystem - Novel encryption based on graph homomorphisms and persistent homology"
+license = "MIT"
+repository = "https://github.com/rand0mdevel0per/XCAlgo"
+homepage = "https://github.com/rand0mdevel0per/XCAlgo"
+documentation = "https://github.com/rand0mdevel0per/XCAlgo/blob/master/README.md"
+readme = "README.md"
+keywords = ["cryptography", "tda", "topology", "graph", "post-quantum"]
+categories = ["cryptography", "algorithms"]
+authors = ["rand0mdevel0per"]
 
 [dependencies]
 sha2 = "0.10"
