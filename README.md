@@ -111,7 +111,7 @@ If you use XCA in your research, please cite:
 ```bibtex
 @software{xca2026,
   title={XCA: Topological Data Analysis Cryptosystem},
-  author={},
+  author={rand0mdevel0per, Anthropic Claude Sonnet 4.5},
   year={2026},
   url={https://github.com/rand0mdevel0per/XCAlgo}
 }
