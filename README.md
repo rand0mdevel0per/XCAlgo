@@ -13,7 +13,7 @@ XCA (eXperimental Cryptographic Algorithm) is a novel encryption scheme based on
 ## Quick Start
 
 ```rust
-use XCAlgo::tda::{tda_keygen, tda_encrypt, tda_decrypt};
+use xcalgo::tda::{tda_keygen, tda_encrypt, tda_decrypt};
 
 // Generate keys
 let (pk, sk) = tda_keygen(128, 192, 3.0)?;
@@ -32,7 +32,7 @@ Add to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-XCAlgo = "0.1.0"
+xcalgo = "0.1.0"
 ```
 
 ## Security Features
@@ -42,7 +42,7 @@ XCAlgo = "0.1.0"
 By default, XCA uses randomized padding to achieve IND-CPA security:
 
 ```rust
-use XCAlgo::tda::{tda_encrypt_with_randomness, tda_decrypt_with_randomness};
+use xcalgo::tda::{tda_encrypt_with_randomness, tda_decrypt_with_randomness};
 
 let ciphertext = tda_encrypt_with_randomness(plaintext, &pk, &sk)?;
 let decrypted = tda_decrypt_with_randomness(&ciphertext, &sk)?;
@@ -55,7 +55,7 @@ let decrypted = tda_decrypt_with_randomness(&ciphertext, &sk)?;
 Reduce ciphertext size with Zstd compression:
 
 ```rust
-use XCAlgo::tda::{tda_encrypt_randomized_compressed, tda_decrypt_decompressed_randomized};
+use xcalgo::tda::{tda_encrypt_randomized_compressed, tda_decrypt_decompressed_randomized};
 
 // Encrypt with randomness + compression
 let compressed_ct = tda_encrypt_randomized_compressed(plaintext, &pk, &sk)?;
@@ -80,9 +80,13 @@ See [BENCHMARK.md](BENCHMARK.md) for detailed performance analysis.
 
 ## Documentation
 
-- [BENCHMARK.md](BENCHMARK.md) - Performance benchmarks and comparisons
-- [MATHEMATICAL_VERIFICATION.md](docs/MATHEMATICAL_VERIFICATION.md) - Formal verification
-- [ADVANCED_SECURITY_ANALYSIS.md](ADVANCED_SECURITY_ANALYSIS.md) - Security analysis
+📚 **Complete documentation available:**
+
+- **[BENCHMARK.md](BENCHMARK.md)** - Performance benchmarks and comparisons with detailed analysis
+- **[MATHEMATICAL_VERIFICATION.md](docs/MATHEMATICAL_VERIFICATION.md)** - Formal mathematical proofs and security analysis
+- **[ADVANCED_SECURITY_ANALYSIS.md](ADVANCED_SECURITY_ANALYSIS.md)** - In-depth security considerations and threat models
+
+For academic use, see the [Citation](#citation) section below.
 
 ## Security Considerations
 
@@ -109,6 +113,6 @@ If you use XCA in your research, please cite:
   title={XCA: Topological Data Analysis Cryptosystem},
   author={},
   year={2026},
-  url={https://github.com/yourusername/XCAlgo}
+  url={https://github.com/rand0mdevel0per/XCAlgo}
 }
 ```
