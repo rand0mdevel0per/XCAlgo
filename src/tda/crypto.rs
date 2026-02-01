@@ -378,55 +378,57 @@ pub fn tda_encrypt_with_randomness(
     pk: &TdaPublicKey,
     sk: &TdaPrivateKey,
 ) -> Result<TdaCiphertext, String> {
-    use rand::RngCore;
+    use crate::tda::padding::{generate_padding_chunks, insert_padding};
 
-    // Store original plaintext length (4 bytes, big-endian)
-    let length = plaintext.len() as u32;
-    let length_bytes = length.to_be_bytes();
+    // Generate random padding chunks (3-8 chunks, 4-16 bytes each)
+    let chunks = generate_padding_chunks(plaintext.len(), 3, 8, 4, 16);
 
-    // Generate 8-byte random nonce (smaller than XCQA due to XCA's higher expansion)
-    let mut nonce = [0u8; 8];
-    rand::thread_rng().fill_bytes(&mut nonce);
+    // Insert padding at random positions
+    let (padded_message, metadata) = insert_padding(plaintext, &chunks);
 
-    // Construct: [length][nonce][plaintext]
-    let mut padded = Vec::with_capacity(4 + 8 + plaintext.len());
-    padded.extend_from_slice(&length_bytes);
-    padded.extend_from_slice(&nonce);
-    padded.extend_from_slice(plaintext);
+    // Serialize padding metadata
+    let metadata_bytes = metadata.serialize();
 
-    // Encrypt the padded message
-    tda_encrypt(&padded, pk, sk)
+    // Construct: [metadata][padded_message]
+    let mut full_message = Vec::with_capacity(metadata_bytes.len() + padded_message.len());
+    full_message.extend_from_slice(&metadata_bytes);
+    full_message.extend_from_slice(&padded_message);
+
+    // Encrypt the full message
+    tda_encrypt(&full_message, pk, sk)
 }
 
 /// Decrypt and remove random padding
 ///
-/// Decrypts the ciphertext and extracts the original plaintext using the stored length.
+/// Decrypts the ciphertext and extracts the original plaintext by removing padding.
 pub fn tda_decrypt_with_randomness(
     ciphertext: &TdaCiphertext,
     sk: &TdaPrivateKey,
 ) -> Result<Vec<u8>, String> {
+    use crate::tda::padding::PaddingMetadata;
+
     // Decrypt
-    let padded = tda_decrypt(ciphertext, sk)?;
+    let full_message = tda_decrypt(ciphertext, sk)?;
 
-    // Need at least 4 bytes for length + 8 bytes for nonce
-    if padded.len() < 12 {
-        return Err("Decrypted data too short".to_string());
+    // Need at least 6 bytes for minimal metadata (original_length + num_chunks)
+    if full_message.len() < 6 {
+        return Err("Decrypted data too short for metadata".to_string());
     }
 
-    // Read original plaintext length (first 4 bytes)
-    let length_bytes: [u8; 4] = padded[0..4].try_into()
-        .map_err(|_| "Failed to read length field")?;
-    let length = u32::from_be_bytes(length_bytes) as usize;
+    // Parse padding metadata
+    let metadata = PaddingMetadata::deserialize(&full_message)?;
 
-    // Skip length (4 bytes) and nonce (8 bytes), extract plaintext
-    let start = 12;
-    let end = start + length;
-
-    if end <= padded.len() {
-        Ok(padded[start..end].to_vec())
-    } else {
-        Err("Length field is corrupted or invalid".to_string())
+    // Calculate metadata size and extract padded message
+    let metadata_size = metadata.serialized_size();
+    if full_message.len() < metadata_size {
+        return Err("Decrypted data too short for full metadata".to_string());
     }
+
+    let padded_message = &full_message[metadata_size..];
+
+    // Remove padding to recover original plaintext
+    use crate::tda::padding::remove_padding;
+    remove_padding(padded_message, &metadata)
 }
 
 // ============================================================================
