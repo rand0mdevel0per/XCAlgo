@@ -6,6 +6,65 @@ use crate::tda::hints::HintSet;
 use rand::Rng;
 use std::collections::HashSet;
 
+// ============================================================================
+// Encryption Configuration
+// ============================================================================
+
+/// Configuration for encryption options
+#[derive(Clone, Debug)]
+pub struct EncryptionConfig {
+    /// Enable random padding for IND-CPA security (default: true)
+    pub randomness: bool,
+    /// Enable zstd compression for size optimization (default: true)
+    pub compression: bool,
+}
+
+impl Default for EncryptionConfig {
+    fn default() -> Self {
+        Self {
+            randomness: true,
+            compression: true,
+        }
+    }
+}
+
+impl EncryptionConfig {
+    /// Create config with both randomness and compression enabled (recommended)
+    pub fn secure() -> Self {
+        Self::default()
+    }
+
+    /// Create config with only randomness (no compression)
+    pub fn randomness_only() -> Self {
+        Self {
+            randomness: true,
+            compression: false,
+        }
+    }
+
+    /// Create config with only compression (no randomness)
+    /// Warning: Not IND-CPA secure!
+    pub fn compression_only() -> Self {
+        Self {
+            randomness: false,
+            compression: true,
+        }
+    }
+
+    /// Create config with no randomness or compression (basic mode)
+    /// Warning: Not IND-CPA secure and no size optimization!
+    pub fn basic() -> Self {
+        Self {
+            randomness: false,
+            compression: false,
+        }
+    }
+}
+
+// ============================================================================
+// Core Data Structures
+// ============================================================================
+
 /// TDA public key (for encryption)
 #[derive(Clone, Debug)]
 pub struct TdaPublicKey {
@@ -472,6 +531,85 @@ fn deserialize_ciphertext(bytes: &[u8]) -> Result<TdaCiphertext, String> {
         steps,
         hints,
     })
+}
+
+// ============================================================================
+// Unified Config-Based Encryption (Recommended API)
+// ============================================================================
+
+/// Encrypt with configuration options (recommended API)
+///
+/// This is the recommended way to encrypt data. By default, both randomness
+/// and compression are enabled for IND-CPA security and size optimization.
+///
+/// # Examples
+/// ```
+/// use XCAlgo::tda::{tda_keygen, tda_encrypt_with_config, EncryptionConfig};
+///
+/// let (pk, sk) = tda_keygen(128, 192, 3.0).unwrap();
+/// let plaintext = b"Hello, World!";
+///
+/// // Use default config (randomness + compression)
+/// let ciphertext = tda_encrypt_with_config(plaintext, &pk, &sk, &EncryptionConfig::default()).unwrap();
+/// ```
+pub fn tda_encrypt_with_config(
+    plaintext: &[u8],
+    pk: &TdaPublicKey,
+    sk: &TdaPrivateKey,
+    config: &EncryptionConfig,
+) -> Result<Vec<u8>, String> {
+    match (config.randomness, config.compression) {
+        (true, true) => {
+            // Both enabled: randomness + compression
+            tda_encrypt_randomized_compressed(plaintext, pk, sk)
+        }
+        (true, false) => {
+            // Only randomness
+            let ciphertext = tda_encrypt_with_randomness(plaintext, pk, sk)?;
+            let serialized = serialize_ciphertext(&ciphertext);
+            Ok(serialized)
+        }
+        (false, true) => {
+            // Only compression
+            tda_encrypt_with_compression(plaintext, pk, sk)
+        }
+        (false, false) => {
+            // Basic mode (no randomness, no compression)
+            let ciphertext = tda_encrypt(plaintext, pk, sk)?;
+            let serialized = serialize_ciphertext(&ciphertext);
+            Ok(serialized)
+        }
+    }
+}
+
+/// Decrypt with configuration options (recommended API)
+///
+/// Must use the same configuration that was used for encryption.
+pub fn tda_decrypt_with_config(
+    ciphertext: &[u8],
+    sk: &TdaPrivateKey,
+    config: &EncryptionConfig,
+) -> Result<Vec<u8>, String> {
+    match (config.randomness, config.compression) {
+        (true, true) => {
+            // Both enabled: decompression + randomness removal
+            tda_decrypt_decompressed_randomized(ciphertext, sk)
+        }
+        (true, false) => {
+            // Only randomness
+            let ct = deserialize_ciphertext(ciphertext)?;
+            tda_decrypt_with_randomness(&ct, sk)
+        }
+        (false, true) => {
+            // Only compression
+            tda_decrypt_with_decompression(ciphertext, sk)
+        }
+        (false, false) => {
+            // Basic mode
+            let ct = deserialize_ciphertext(ciphertext)?;
+            tda_decrypt(&ct, sk)
+        }
+    }
 }
 
 #[cfg(test)]
