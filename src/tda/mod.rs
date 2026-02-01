@@ -4,6 +4,7 @@ pub mod noise;
 pub mod path;
 pub mod hints;
 pub mod padding;
+pub mod simd;
 pub mod crypto;
 
 pub use graph::Graph;

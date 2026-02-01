@@ -147,13 +147,12 @@ pub fn generate_padding_chunks(
 /// # Returns
 /// Tuple of (padded_message, metadata)
 pub fn insert_padding(message: &[u8], chunks: &[PaddingChunk]) -> (Vec<u8>, PaddingMetadata) {
-    let mut rng = rand::thread_rng();
     let mut result = message.to_vec();
 
     // Insert padding chunks in reverse order to maintain positions
     for chunk in chunks.iter().rev() {
-        // Generate random padding bytes
-        let padding: Vec<u8> = (0..chunk.length).map(|_| rng.r#gen::<u8>()).collect();
+        // Generate random padding bytes using SIMD when available
+        let padding = crate::tda::simd::generate_random_bytes_simd(chunk.length);
 
         // Insert at position
         let insert_pos = chunk.position.min(result.len());
