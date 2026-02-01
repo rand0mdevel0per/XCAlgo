@@ -48,7 +48,8 @@ pub fn generate_random_bytes_simd(length: usize) -> Vec<u8> {
 /// # Returns
 /// Vector of booleans representing individual bits
 pub fn bytes_to_bits_simd(bytes: &[u8]) -> Vec<bool> {
-    if is_avx2_available() && bytes.len() >= 32 {
+    // Use SIMD only for larger inputs (128+ bytes) to avoid overhead
+    if is_avx2_available() && bytes.len() >= 128 {
         unsafe { bytes_to_bits_avx2(bytes) }
     } else {
         bytes_to_bits_scalar(bytes)
@@ -90,7 +91,8 @@ fn bytes_to_bits_avx2(bytes: &[u8]) -> Vec<bool> {
 /// # Returns
 /// Vector of bytes
 pub fn bits_to_bytes_simd(bits: &[bool]) -> Vec<u8> {
-    if is_avx2_available() && bits.len() >= 256 {
+    // Use SIMD only for larger inputs (1024+ bits = 128+ bytes) to avoid overhead
+    if is_avx2_available() && bits.len() >= 1024 {
         unsafe { bits_to_bytes_avx2(bits) }
     } else {
         bits_to_bytes_scalar(bits)
